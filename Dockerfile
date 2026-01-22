@@ -12,38 +12,19 @@ RUN sed -i 's/Listen 80/Listen 8080/' \
     /etc/apache2/ports.conf \
     /etc/apache2/sites-available/000-default.conf
 
-# 3. DocumentRoot -> /var/www/html/src
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/src
-RUN sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
-    /etc/apache2/sites-available/*.conf \
-    /etc/apache2/apache2.conf
-
-# 4. Habilitar mod_rewrite
+# 3. Habilitar mod_rewrite (opcional pero recomendado)
 RUN a2enmod rewrite
 
-# 5. Copiar proyecto
-COPY . /var/www/html/
+# 4. Copiar SOLO index.php desde src al DocumentRoot real
+COPY src/index.php /var/www/html/index.php
 
-# 6. Permisos
+# (opcional) si tienes otros assets
+# COPY src/assets /var/www/html/assets
+
+# 5. Permisos
 RUN chown -R www-data:www-data /var/www/html
 
-# 7. Entrypoint (FORMA SEGURA – sin heredoc)
-RUN printf '%s\n' \
-'#!/bin/bash' \
-'set -e' \
-'' \
-'if [ -n "$DATABASE_URL" ]; then' \
-'  echo "Verificando base de datos..."' \
-'  psql "$DATABASE_URL" -tc "SELECT 1 FROM information_schema.tables LIMIT 1" | grep -q 1 \\' \
-'    || psql "$DATABASE_URL" -f /var/www/html/sql/init.sql' \
-'fi' \
-'' \
-'exec apache2-foreground' \
-> /usr/local/bin/docker-entrypoint.sh
-
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-# 8. Puerto Fly.io
+# 6. Entrypoint mínimo (sin lógica extra)
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["apache2-foreground"]
