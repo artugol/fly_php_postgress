@@ -29,7 +29,7 @@ try {
     $users = $stmt->fetchAll();
 
     if ($users) {
-        echo "<h3>Lista de usuarios:</h3><ul>";
+        echo "<h3>Cuentas de usuarios:</h3><ul>";
         foreach ($users as $user) {
             echo "<li>ID: " . $user['id'] . " - Nombre: " . htmlspecialchars($user['name']) . "</li>";
         }
