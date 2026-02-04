@@ -1,6 +1,6 @@
 <?php
 // Tu cadena de conexión (Lo ideal es que esto venga de getenv('DATABASE_URL'))
-$databaseUrl = "postgresql://fly-user:tPZ1lHoJxuKM7vHh3KbEB9Xh@pgbouncer.z23750v7myl096d1.flympg.net/fly-db";
+$databaseUrl = "postgresql://postgres:nTfVWHncsUoVicLxvCcjzeEWcUBiKdDF@centerbeam.proxy.rlwy.net:30928/railway";
 
 // Parseamos la URL para extraer los componentes
 $dbConfig = parse_url($databaseUrl);
