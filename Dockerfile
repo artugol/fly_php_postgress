@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 2. Configuración de puertos para Railway
-# Usamos la variable ${PORT} para que sea dinámico
+# Se usa la variable ${PORT} para que sea dinámico según el entorno
 RUN sed -i "s/Listen 80/Listen \${PORT}/" /etc/apache2/ports.conf \
     && sed -i "s/<VirtualHost \*:80>/<VirtualHost *:\${PORT}>/" /etc/apache2/sites-available/000-default.conf
 
@@ -39,5 +39,8 @@ RUN printf '%s\n' \
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Railway usa el puerto 8080 por defecto si no se indica otro
+# Puerto por defecto de Railway
 ENV PORT=8080
+EXPOSE 8080
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
