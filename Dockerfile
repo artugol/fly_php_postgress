@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo pdo_pgsql pgsql \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 2. Configuración de puertos (usando variable de entorno)
+# 2. Configuración de puertos dinámica
 RUN sed -i "s/Listen 80/Listen \${PORT}/" /etc/apache2/ports.conf \
     && sed -i "s/<VirtualHost \*:80>/<VirtualHost *:\${PORT}>/" /etc/apache2/sites-available/000-default.conf
 
@@ -21,24 +21,26 @@ COPY sql/init.sql /sql/init.sql
 # 5. Permisos
 RUN chown -R www-data:www-data /var/www/html
 
-# 6. Entrypoint "Blindado"
-# Ahora corregimos los MPMs justo antes de lanzar Apache
+# 6. Entrypoint "Inmune"
+# Borramos los archivos de los módulos mpm_event y mpm_worker directamente
 RUN printf '%s\n' \
 '#!/bin/bash' \
 'set -e' \
 '' \
-'# --- PASO CRÍTICO PARA EVITAR EL ERROR AH00534 ---' \
-'# Desactivamos módulos que sobran y activamos el correcto en cada arranque' \
-'a2dismod mpm_event || true' \
-'a2dismod mpm_worker || true' \
-'a2enmod mpm_prefork || true' \
+'echo "Limpiando módulos MPM conflictivos..."' \
+'rm -f /etc/apache2/mods-enabled/mpm_event.*' \
+'rm -f /etc/apache2/mods-enabled/mpm_worker.*' \
+'' \
+'# Forzamos la carga de mpm_prefork manualmente si no existe' \
+'ln -sf /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load' \
+'ln -sf /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf' \
 '' \
 'if [ -n "$DATABASE_URL" ] && [ -f /sql/init.sql ]; then' \
 '  echo "Inicializando base de datos..."' \
 '  psql "$DATABASE_URL" -f /sql/init.sql || true' \
 'fi' \
 '' \
-'echo "--- APACHE INICIANDO SIN CONFLICTOS ---"' \
+'echo "--- LANZANDO APACHE SIN RIVALES ---"' \
 'exec apache2-foreground' \
 > /usr/local/bin/docker-entrypoint.sh
 
